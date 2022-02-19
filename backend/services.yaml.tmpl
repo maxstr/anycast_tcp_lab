@@ -1,0 +1,9 @@
+---
+vips:
+{% for ip in ls("/vips") %}
+  "{{ ip }}":
+    ports:
+  {% for item in getvs(printf("/vips/%s/ports/*", ip)) %}
+      - "{{ item }}"
+  {% endfor %}
+{% endfor %}

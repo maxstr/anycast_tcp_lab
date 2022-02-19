@@ -1,0 +1,30 @@
+global_defs {
+	max_auto_priority
+	lvs_flush
+	checker_log_all_failures true
+}
+{% for vip in lsdir("/vips") %}
+	{% for portmap in ls(printf("/vips/%s/ports", vip)) %}
+	{% set service_port = getv(printf("/vips/%s/ports/%s", vip, portmap))|split:":"|index:"0" %}
+	{% set mapped_port = getv(printf("/vips/%s/ports/%s", vip, portmap))|split:":"|index:"1" %}
+virtual_server {{ vip }} {{ service_port }} {
+	lvs_sched mh
+{# flag 1 is mh-fallback, flag 2 is mh-port per https://elixir.bootlin.com/linux/v5.8/source/net/netfilter/ipvs/ip_vs_mh.c#L36 #}
+	flag-1
+	flag-2
+        quorum 1
+	lvs_method TUN type ipip
+	protocol TCP
+	# Assume all endpoints down at start
+		{% for target_group in ls(printf ("/vips/%s/targets", vip)) %}
+		{% set target_group_name = getv(printf("/vips/%s/targets/%s", vip, target_group)) %}
+			{% for target_host in getvs(printf("/target_groups/%s/hosts/*", target_group_name)) %}
+	real_server {{ target_host }} {{ mapped_port }} {
+		TCP_CHECK {}
+	}
+			{% endfor %}
+		{% endfor %}
+}
+{% endfor %}
+{% endfor %}
+
