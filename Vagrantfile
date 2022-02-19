@@ -3,7 +3,7 @@
 require 'ipaddr'
 
 # Topology
-# client using NAT interface IP (eg 172.17...) -> router -> forwarder -> encap over private network -> backend
+# client using "internet" interface IP (192.168.10.0/24) -> router -> forwarder -> encap over private network(192.168.0.0/24) -> backend
 
 def network_index(network, index)
 	initial_address = IPAddr.new network
